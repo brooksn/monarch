@@ -13,11 +13,13 @@ const baseColors = {
   red: '#f52',
   orange: '#f70',
   green: '#1c7',
-  gold: '#ffd54f'
+  gold: '#ffd54f',
+  goldrush: '#fdb81e',
+  ocean: '#126c9c'
 }
 const colors = {
   ...baseColors,
-  primary: baseColors.gold,
+  primary: baseColors.goldrush,
   secondary: baseColors.midgray,
   default: baseColors.black,
   info: baseColors.blue,

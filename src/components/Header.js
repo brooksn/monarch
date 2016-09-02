@@ -10,11 +10,15 @@ export default class Header extends Component {
   render() {
     const noUnderlineLinkStyle = {
       textDecoration: 'none',
-      color: this.context.rebass.colors.white
+      color: this.context.rebass.colors.midgray
     }
     const toolbarStyle = {
+      backgroundColor: this.context.rebass.white,
       fontFamily: this.context.rebass.monospace,
-      color: this.context.rebass.colors.white
+      color: this.context.rebass.colors.ocean,
+      borderBottomWidth: 5,
+      borderBottomStyle: 'solid',
+      borderBottomColor: this.context.rebass.colors.goldrush
     }
     return (
       <Toolbar style={toolbarStyle}>
@@ -29,7 +33,7 @@ export default class Header extends Component {
           auto
           x={1}
         />
-        <NavItem is="a">
+        <NavItem is={Link} to="data">
           Data
         </NavItem>
         <NavItem is="a">
