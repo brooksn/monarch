@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Component } from 'react'
 import { Section, SectionHeader } from 'rebass'
 import blogStore, { BLOG_STORE_CHANGE_EVENT, getPosts } from '../stores/blogStore.js'
 const containerStyle = {
@@ -10,7 +10,7 @@ const articleStyle = {
 }
 const titleStyle = {}
 const bodyStyle = {}
-export default class Blog extends React.Component {
+export default class Blog extends Component {
   constructor(props) {
     super(props)
     const storePosts = getPosts()
