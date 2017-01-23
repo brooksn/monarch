@@ -32,20 +32,15 @@ export default class BannerMap extends React.Component {
 
   _onCreate(e) {
     polyline = e.layer;
-    console.log(polyline)
     // To edit this polyline call : polyline.handler.enable()
-    console.log("Path created !");
   }
   onDeleteStart(e) {
     console.log('onDeleteStart: ')
-    console.log(e)
   }
   onDeleteStop(e) {
     console.log('onDeleteStop: ')
-    console.log(e)
   }
   _onDeleted(e) {
-    console.log(e)
     console.log('Path deleted !')
   }
 

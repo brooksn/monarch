@@ -21,10 +21,10 @@ function removeMap(mapName, changeEvent) {
 function updateMap(mapName, map, changeEvent) {
   if (!maps[mapName]) {
     maps[mapName] = map
-    emitChange({changeEvent, mapName})
-  } else if (maps[mapName].toBBoxString && maps[mapName].toBBoxString() !== map.toBBoxString()) {
+    emitChange({mapName, map})
+  } else if (Array.isArray(maps[mapName]) && maps[mapName].join(',') !== map.join(',')) {
     maps[mapName] = map
-    emitChange({changeEvent, mapName})
+    emitChange({mapName, map})
   }
 }
 

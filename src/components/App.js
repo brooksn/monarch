@@ -4,6 +4,7 @@ import Header from './Header'
 //import Blog from './Blog'
 
 const monospace = '"SF Mono", "Roboto Mono", Menlo, Consolas, monospace'
+const sansSerif = '-apple-system, BlinkMacSystemFont, ".SFNSText-Regular", "San Francisco", "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Lucida Grande", sans-serif'
 const baseColors = {
   black: '#111',
   white: '#fff',
@@ -36,6 +37,7 @@ class App extends Component {
     return {
       rebass: {
         monospace,
+        sansSerif,
         colors,
         Button: {
           backgroundColor: 'tomato'
@@ -47,7 +49,7 @@ class App extends Component {
     //const children = React.Children.map(child => React.cloneElement(child))
     
     return (
-      <div className="App">
+      <div className="App" style={{fontFamily: sansSerif }}>
         <Header />
         <div className="app-children">
           {this.props.children}

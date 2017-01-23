@@ -1,22 +1,15 @@
-import queryPublicSchools from '../actions/queryPublicSchools.js'
-import mapStore, { getBoundingBoxOfMap, MAP_STORE_CHANGE_EVENT } from './mapStore.js'
+import mapStore, { MAP_STORE_CHANGE_EVENT } from './mapStore.js'
 import { throttle, defer } from 'lodash'
 import catchHTTPStatus from '../actions/catchHTTPStatus.js'
 import querystring from 'querystring'
-import turf from 'turf'
 import EventEmitter from 'events'
-import { GeoStore } from 'terraformer-geostore'
-import { RTree } from 'terraformer-rtree'
-//import { Memory as MemoryGeoStore } from 'terraformer-geostore-memory'
-import { LocalStorage as LocalStorageGeoStore } from './terraformer-geostore-localstorage.js'
+import rbush from 'rbush'
+const tree = rbush(100)
+
 export const SCHOOL_STORE_CHANGE_EVENT = 'schoolStore changed.'
+const recordsMissingCoordinates = 320
 const schoolStore = new EventEmitter()
-const fetchHistory = {}
-const geoStore = new GeoStore({
-  store: new LocalStorageGeoStore(),
-  index: new RTree()
-})
-window.geoStore = geoStore
+
 const unthrottledEmitChange = function unthrottledEmitChange() {
   schoolStore.emit(SCHOOL_STORE_CHANGE_EVENT)
 }
@@ -24,18 +17,12 @@ const emitChange = throttle(unthrottledEmitChange, 100)
 
 function getSchoolsInSomeLeafletBBox(bbox) {
   //const buffer = theBuffer || 0
-  const p = new Promise((resolve, reject) => {
-    const envelope = turf.envelope(turf.featureCollection([turf.point([bbox._southWest.lng, bbox._southWest.lat]), turf.point([bbox._northEast.lng, bbox._northEast.lat])]))
-    geoStore.within(envelope.geometry, (err, res) => {
-      if (err) {
-        reject(err)
-      }
-      else if (res) {
-        resolve(res)
-      }
-    })
-  })
-  return p
+  const searchArea = {minX: bbox[0], minY: bbox[1], maxX: bbox[2], maxY: bbox[3]}
+  return tree.search(searchArea)
+}
+
+export function getAllSchools() {
+  return tree.all()
 }
 
 export function getSchoolsInLeafletBBox(bbox) {
@@ -45,14 +32,9 @@ export function getSchoolsInBufferedLeafletBBox(bbox) {
   return getSchoolsInSomeLeafletBBox(bbox)
 }
 
-function queryPublicSchoolsInBBox(bbox) {
-  const envelopeString = bbox.toBBoxString()
-}
-
 mapStore.on(MAP_STORE_CHANGE_EVENT, (mapStoreChange) => {
-  const bbox = getBoundingBoxOfMap(mapStoreChange.mapName)
-  const envelope = bbox && bbox.toBBoxString ? bbox.toBBoxString() : null
-  if (envelope && !fetchHistory[envelope]) queryPublicSchoolsInBBox(bbox)
+  //const bbox = getBoundingBoxOfMap(mapStoreChange.mapName)
+  //const envelope = bbox && bbox.toBBoxString ? bbox.toBBoxString() : bbox.join(',')
 })
 
 function fetchInitialStoreData(lastOBJECTID) {
@@ -60,6 +42,7 @@ function fetchInitialStoreData(lastOBJECTID) {
   const where = `OBJECTID <=100000${andWhere}`
   const qs = querystring.stringify({
     where,
+    outSR: 4326,
     orderByFields: 'OBJECTID ASC',
     f: 'json',
     outFields: ['OBJECTID', 'School', 'Street', 'City', 'Zip'].join(',')
@@ -68,29 +51,27 @@ function fetchInitialStoreData(lastOBJECTID) {
   .then(catchHTTPStatus)
   .then(res => res.json())
   .then(json => {
-    const exceededTransferLimit = json.exceededTransferLimit
-    console.log(json.features.length)
-    
-    json.features.forEach((feature, ind, features) => {
-      const geoFeature = turf.point([feature.geometry.x, feature.geometry.y], {
+    const features = json.features.filter(feature => !isNaN(feature.geometry.x)).map(feature => {
+      const pin = {
         id: 'school_' + feature.attributes.OBJECTID,
-        objectid: feature.attributes.OBJECTID,
         school: feature.attributes.School,
         street: feature.attributes.Street,
-        city: feature.attributes.City
-      })
-      geoFeature.id = `school_${feature.attributes.OBJECTID}`
-      defer((gf, i, arr, etl, OBJECTID) => {
-        const localStorageKey = geoStore.store.key(geoFeature.id)
-        if (!localStorage.getItem(localStorageKey)) geoStore.add(gf) 
-        if (i >= arr.length-1 && etl) {
-          fetchInitialStoreData(OBJECTID)
-        } else if (!etl) {
-          alert('all done: ' + OBJECTID)
-          emitChange()
-        }
-      }, geoFeature, ind, features, exceededTransferLimit, feature.attributes.OBJECTID)
+        city: feature.attributes.City,
+        lat: feature.geometry.y,
+        lng: feature.geometry.x,
+        minY: feature.geometry.y,
+        minX: feature.geometry.x,
+        maxY: feature.geometry.y,
+        maxX: feature.geometry.x
+      }
+      localStorage.setItem(pin.id, JSON.stringify(pin))
+      return pin
     })
+    defer((pins, didExceedTransferLimit, lastOBJECTID) => {
+      tree.load(pins)
+      if (didExceedTransferLimit) fetchInitialStoreData(lastOBJECTID)
+      emitChange()
+    }, features, json.exceededTransferLimit, json.features[json.features.length-1].attributes.OBJECTID)
   })
 }
 
@@ -98,17 +79,20 @@ fetch('http://services.gis.ca.gov/arcgis/rest/services/Society/CaliforniaSchools
 .then(catchHTTPStatus)
 .then(res => res.json())
 .then(json => {
-  let id = geoStore.store.key(`school_${json.count}`)
-  if (!localStorage.getItem(id)) {
-    console.log(`don't have id ${id}`)
-    fetchInitialStoreData(null)
+  const lastSchoolID = `school_${json.count}`
+  const localStorageKeys = Object.keys(localStorage).filter(k => k.substr(0, 7) === 'school_')
+  if (localStorageKeys.length < parseInt(json.count-recordsMissingCoordinates, 10) 
+    || !localStorage.getItem(lastSchoolID)) {
+    fetchInitialStoreData(null) //Some data appears to be missing from localStorage; best fetch all the pages.
   } else {
-    console.log('all here.')
+    localStorageKeys.forEach(localStorageKey => {
+      defer(key => {
+        const datum = JSON.parse(localStorage.getItem(key))
+        tree.insert(datum)
+        emitChange()
+      }, localStorageKey)
+    })
   }
-  //fetchInitialStoreData(null, json.maxRecordCount)
 })
 
-//fetch last row
-
-//fetchInitialStoreData(null)
 export default schoolStore

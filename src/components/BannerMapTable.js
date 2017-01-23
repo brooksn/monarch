@@ -11,19 +11,18 @@ const containerStyle = {
 export default class BannerMapTable extends React.Component {
   constructor(props) {
     super(props)
+    const bbox = getBoundingBoxOfMap(this.props.mapName)
+    const schools = bbox ? getSchoolsInLeafletBBox(bbox) || [] : []
     this.state = {
-      schools: []
+      schools
     }
-    this.debouncedUpdateStateFromSchoolStore = debounce(this.updateStateFromSchoolStore.bind(this), 200)
+    this.debouncedUpdateStateFromSchoolStore = debounce(this.updateStateFromSchoolStore.bind(this), 200).bind(this)
+    this.debouncedMapStoreChange = debounce(this.mapStoreChange.bind(this), 100).bind(this)
   }
   updateStateFromSchoolStore() {
     const bbox = getBoundingBoxOfMap(this.props.mapName)
-    if (bbox) {
-      getSchoolsInLeafletBBox(bbox)
-      .then(res => {
-        this.setState({schools: res})
-      })
-    }
+    const schools = bbox ? getSchoolsInLeafletBBox(bbox) || [] : []
+    this.setState({schools})
   }
   schoolStoreChange(e) {
     this.debouncedUpdateStateFromSchoolStore()
@@ -32,16 +31,17 @@ export default class BannerMapTable extends React.Component {
     this.debouncedUpdateStateFromSchoolStore()
   }
   componentDidMount() {
-    mapStore.on(MAP_STORE_CHANGE_EVENT, this.debouncedUpdateStateFromSchoolStore)
+    this.debouncedMapStoreChange()
+    mapStore.on(MAP_STORE_CHANGE_EVENT, this.debouncedMapStoreChange)
     schoolStore.on(SCHOOL_STORE_CHANGE_EVENT, this.debouncedUpdateStateFromSchoolStore)
   }
   componentWillUnmount() {
-    mapStore.removeListener(MAP_STORE_CHANGE_EVENT, this.debouncedUpdateStateFromSchoolStore)
+    mapStore.removeListener(MAP_STORE_CHANGE_EVENT, this.debouncedMapStoreChange)
     schoolStore.removeListener(SCHOOL_STORE_CHANGE_EVENT, this.debouncedUpdateStateFromSchoolStore)
   }
   render() {
-    const tableData = this.state.schools.slice(0,40).map(feature => {
-      return [feature.properties.school, feature.properties.street, feature.properties.city]
+    const tableData = this.state.schools.slice(0,40).map(pin => {
+      return [pin.school, pin.street, pin.city]
     })
     if (this.state.schools.length > tableData.length) {
       tableData.push([`…and ${this.state.schools.length - tableData.length} more schools are not displayed.`, '', ''])

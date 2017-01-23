@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
-import { Section, SectionHeader } from 'rebass'
-import blogStore, { BLOG_STORE_CHANGE_EVENT, getPosts } from '../stores/blogStore.js'
+import { Media, Section, SectionHeader } from 'rebass'
+import blogStore, { BLOG_STORE_CHANGE_EVENT, getPages } from '../stores/blogStore.js'
 const containerStyle = {
   marginLeft: '2em',
   marginRight: '2em'
@@ -13,17 +13,16 @@ const bodyStyle = {}
 export default class Blog extends Component {
   constructor(props) {
     super(props)
-    const storePosts = getPosts()
-    const posts = typeof storePosts === 'object' && Array.isArray(storePosts.posts) ? storePosts.posts : []
+    const pages = getPages()
     this.state = {
-      posts,
+      pages,
       noPosts: false
     }
   }
   blogStoreChanged() {
-    const json = getPosts()
-    if (typeof json === 'object' && Array.isArray(json.posts)) this.setState({posts: json.posts})
-    else this.setState({noPosts: true})
+    const pages = getPages()
+    const noPosts = pages.length > 0
+    this.setState({pages, noPosts})
   }
   componentDidMount() {
     blogStore.on(BLOG_STORE_CHANGE_EVENT, this.blogStoreChanged.bind(this))
@@ -32,15 +31,16 @@ export default class Blog extends Component {
     blogStore.removeListener(BLOG_STORE_CHANGE_EVENT, this.blogStoreChanged.bind(this))
   }
   render() {
-    const posts = this.state.posts.map(post => {
-      const dangerousPostContentHTML = {__html: post.content}
+    const posts = this.state.pages.map(page => {
+      const dangerousPostContentHTML = {__html: page.content}
       return (
-        <article key={post.global_ID} style={articleStyle}>
+        <article key={page.global_ID} style={articleStyle}>
           <Section>
             <SectionHeader style={titleStyle}
-              heading={post.title}
+              heading={page.title}
             />
-          <div style={bodyStyle} dangerouslySetInnerHTML={dangerousPostContentHTML} />
+            <Media align="center" img={page.featured_image} />
+            <div style={bodyStyle} dangerouslySetInnerHTML={dangerousPostContentHTML} />
           </Section>
         </article>
       )

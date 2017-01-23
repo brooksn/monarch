@@ -1,37 +1,26 @@
-import queryWordpressPosts from '../actions/queryWordpressPosts.js'
-import { throttle } from 'lodash'
+import queryWordpress from '../actions/queryWordpress.js'
+import { throttle, uniqBy } from 'lodash'
 import EventEmitter from 'events'
 const blogStore = new EventEmitter()
 export const BLOG_STORE_CHANGE_EVENT = 'blogStore changed.'
 const BLOG_URL = process.env.REACT_APP_WORDPRESS_BLOG
-const blogRequests = []
+const pageStore = []
 
 const unthrottledEmitChange = function unthrottledEmitChange() {
   blogStore.emit(BLOG_STORE_CHANGE_EVENT)
 }
 const emitChange = throttle(unthrottledEmitChange, 100)
 
-function newQuery(posts, site) {
-  blogRequests.push({
-    posts,
-    site,
-    date: new Date()
-  })
-  emitChange()
-}
-
-export function getPosts() {
-  if (blogRequests.length > 0) {
-    return blogRequests[blogRequests.length-1]
-  }
+export function getPages() {
+  return uniqBy(pageStore, 'slug').filter(page => page.featured_image)
 }
 
 //Object.freeze(blogStore)
 export default blogStore
 
-queryWordpressPosts(BLOG_URL)
+queryWordpress({blog: BLOG_URL, type: 'page'})
 .then(json => {
-  if (json.found && parseInt(json.found, 10) > 0 && Array.isArray(json.posts)) {
-    newQuery(json.posts, BLOG_URL)
-  }
+  const pages = Array.isArray(json.posts) ? json.posts : []
+  pages.forEach(page => pageStore.push(page))
+  emitChange()
 })

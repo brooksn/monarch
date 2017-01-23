@@ -13,6 +13,7 @@ export default class Header extends Component {
       color: this.context.rebass.colors.midgray
     }
     const toolbarStyle = {
+      height: 80,
       backgroundColor: this.context.rebass.white,
       fontFamily: this.context.rebass.monospace,
       color: this.context.rebass.colors.ocean,
@@ -22,12 +23,12 @@ export default class Header extends Component {
     }
     return (
       <Toolbar style={toolbarStyle}>
-        <Block is={Link} to="/">
+        <Block style={{marginRight: 10, paddingTop: 5}} is={Link} to="/">
           <img alt="monarch logo" src={logo} width={64} />
         </Block>
         <Block is={Link} to="/" style={noUnderlineLinkStyle}>
-          <Text>State of California</Text>
-          <Heading>GIS Resource Center</Heading>
+          <Text style={{color:this.context.rebass.colors.goldrush}}>State of California</Text>
+          <Heading style={{color:this.context.rebass.colors.ocean}}>GIS Resource Center</Heading>
         </Block>
         <Space
           auto
@@ -43,7 +44,7 @@ export default class Header extends Component {
           About
         </NavItem>
         <NavItem is={Link} to="blog">
-            Blog
+          Adventure Log
         </NavItem>
       </Toolbar>
     )

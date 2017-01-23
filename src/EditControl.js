@@ -28,7 +28,6 @@ export default class EditControl extends LayersControl {
         featureGroup: layerContainer
       }
     };
-    console.log(options)
 
     if(draw) options.draw = draw;
     if(position) options.position = position;
