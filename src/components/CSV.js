@@ -125,7 +125,8 @@ class CSV extends Component {
     return fileID || csvTruthiness || cs || shallowCompare(this, nextProps, nextState)
   }
   geocoderStoreChanged() {
-    const id = Array.isArray(this.state.jobIDS) ? geocodeID(this.state.jobIDS[this.state.jobIDS.length-1]) : null
+    const jobIDs = this.state.jobIDs
+    const id = Array.isArray(jobIDs) ? geocodeID(jobIDs[(jobIDs.length-1)]) : null
     if (typeof id === 'string' && id.length > 1) this.context.router.push(`/geocode/${id}`)
   }
   componentDidMount() {
@@ -135,6 +136,7 @@ class CSV extends Component {
     geocoderStore.removeListener(GEOCODER_STORE_CHANGE_EVENT, this.geocoderStoreChanged.bind(this))
   }
   render() {
+    const canSubmit = this.canSubmit()
     const fieldStyle={fontSize: '0.5em'}
     const fields = {}
     geocoderRequestFields.forEach(fieldName => fields[fieldName] = this.state[fieldName])
@@ -155,7 +157,7 @@ class CSV extends Component {
       text={field} 
       isDropped={this.isDropped.bind(this)}
     />))
-    const submitButton = !this.canSubmit() ? null : 
+    const submitButton = !canSubmit ? null : 
       <Button backgroundColor="primary" color="white" rounded onClick={this.submitClick.bind(this)}>
         Submit
       </Button>
@@ -168,6 +170,8 @@ class CSV extends Component {
             <div>{dropAreaText}</div>
           </Dropzone>
           {submitButton}
+          <br />
+          <a style={{display:'inline-block'}} href="https://msdn.microsoft.com/en-us/library/jj735477.aspx#Anchor_2">Data definitions</a>
         </Box>
         <Box col={6} p={3} >
           {csvFieldBoxes}

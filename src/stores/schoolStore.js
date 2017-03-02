@@ -47,7 +47,7 @@ function fetchInitialStoreData(lastOBJECTID) {
     f: 'json',
     outFields: ['OBJECTID', 'School', 'Street', 'City', 'Zip'].join(',')
   })
-  fetch(`http://services.gis.ca.gov/arcgis/rest/services/Society/CaliforniaSchools/MapServer/0/query?${qs}`)
+  fetch(`https://services.gis.ca.gov/arcgis/rest/services/Society/CaliforniaSchools/MapServer/0/query?${qs}`)
   .then(catchHTTPStatus)
   .then(res => res.json())
   .then(json => {
@@ -75,7 +75,7 @@ function fetchInitialStoreData(lastOBJECTID) {
   })
 }
 
-fetch('http://services.gis.ca.gov/arcgis/rest/services/Society/CaliforniaSchools/MapServer/0/query?where=OBJECTID+%3C%3D100000&returnCountOnly=true&f=json')
+fetch('https://services.gis.ca.gov/arcgis/rest/services/Society/CaliforniaSchools/MapServer/0/query?where=OBJECTID+%3C%3D100000&returnCountOnly=true&f=json')
 .then(catchHTTPStatus)
 .then(res => res.json())
 .then(json => {

@@ -59,8 +59,6 @@ function checkJob(jobID) {
     .then(res => res.json())
     .then(json => {
       const data = json.data
-      console.log('data:')
-      console.log(data)
       jobs[jobID].createdDate = jobs[jobID].createdDate || new Date(data.resourceSets[0].resources[0].createdDate)
       jobs[jobID].checked = new Date()
       jobs[jobID].status = Status[data.resourceSets[0].resources[0].status]
@@ -84,8 +82,6 @@ function sendJob(jobID, body, description) {
   .then(res => res.json())
   .then(json => {
     const data = json.data
-    console.log('data: ')
-    console.log(data)
     jobs[jobID] = {
       id: data.resourceSets[0].resources[0].id,
       status: Status[data.resourceSets[0].resources[0].status],

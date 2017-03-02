@@ -27,8 +27,8 @@ export default class Header extends Component {
           <img alt="monarch logo" src={logo} width={64} />
         </Block>
         <Block is={Link} to="/" style={noUnderlineLinkStyle}>
-          <Text style={{color:this.context.rebass.colors.goldrush}}>{process.env.SITE_TITLE}</Text>
-          <Heading style={{color:this.context.rebass.colors.ocean}}>process.env.SITE_SUBTITLE</Heading>
+          <Text style={{color:this.context.rebass.colors.goldrush}}>{process.env.REACT_APP_SITE_TITLE}</Text>
+          <Heading style={{color:this.context.rebass.colors.ocean}}>{process.env.REACT_APP_SITE_SUBTITLE}</Heading>
         </Block>
         <Space
           auto
